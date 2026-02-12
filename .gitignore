@@ -1,0 +1,19 @@
+# Binaries
+minidb
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Data directory (database storage)
+data/
+*.sst
+*.log
+
+# Mac OS
+.DS_Store
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
