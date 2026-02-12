@@ -158,6 +158,7 @@ func ExecuteQuery(sql string, cat *catalog.Catalog, engine storage.StorageEngine
   HELP                  Show this help
   SHOW TABLES           List all tables
   SHOW DATABASES        List all databases
+  USE <database>        Switch database
   DESCRIBE <table_name> Show table schema
   
   SQL Support:
@@ -176,6 +177,19 @@ func ExecuteQuery(sql string, cat *catalog.Catalog, engine storage.StorageEngine
 	}
 	if upperSQL == "SHOW DATABASES" || upperSQL == "SHOW DATABASES;" {
 		return "Databases:\nminidb\n(1 rows)\n"
+	}
+	if strings.HasPrefix(upperSQL, "USE ") {
+		parts := strings.Fields(upperSQL)
+		if len(parts) < 2 {
+			return "Usage: USE <database_name>\n"
+		}
+		dbName := parts[1]
+		dbName = strings.TrimSuffix(dbName, ";")
+
+		if dbName == "MINIDB" {
+			return "Database changed\n"
+		}
+		return fmt.Sprintf("Error: Unknown database '%s'\n", dbName)
 	}
 	if strings.HasPrefix(upperSQL, "DESCRIBE ") {
 		parts := strings.Fields(sql) // Use original SQL for arguments
