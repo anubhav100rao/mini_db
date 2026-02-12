@@ -38,6 +38,26 @@ make run
 ```
 Or manually: `./minidb`
 
+**Example Session:**
+```sql
+minidb> HELP
+minidb> SHOW TABLES
+Tables:
+users
+(1 rows)
+
+minidb> DESCRIBE users
+Table: users
+Column | Type
+-------+-----
+id     | int
+name   | string
+
+minidb> INSERT INTO users VALUES (1, 'Alice')
+minidb> SELECT * FROM users WHERE id = 1
+[1 Alice]
+```
+
 **2. Server Mode**
 ```bash
 make server

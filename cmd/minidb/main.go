@@ -151,14 +151,64 @@ func handleQuery(sql string, cat *catalog.Catalog, engine storage.StorageEngine,
 func ExecuteQuery(sql string, cat *catalog.Catalog, engine storage.StorageEngine, txID types.TxnID) string {
 	var sb strings.Builder
 
+	// Metadata Commands
+	upperSQL := strings.ToUpper(strings.TrimSpace(sql))
+	if upperSQL == "HELP" {
+		return `Available Commands:
+  HELP                  Show this help
+  SHOW TABLES           List all tables
+  SHOW DATABASES        List all databases
+  DESCRIBE <table_name> Show table schema
+  
+  SQL Support:
+  SELECT * FROM <table> [WHERE <col> = <val>]
+  INSERT INTO <table> VALUES (<val>, ...), ...
+  BEGIN / COMMIT / ROLLBACK
+
+  Maintenance:
+  FLUSH                 Flush MemTable to disk
+  COMPACT               Run compaction
+`
+	}
+	if upperSQL == "SHOW TABLES" || upperSQL == "SHOW TABLES;" {
+		names := cat.GetTableNames()
+		return fmt.Sprintf("Tables:\n%s\n(%d rows)\n", strings.Join(names, "\n"), len(names))
+	}
+	if upperSQL == "SHOW DATABASES" || upperSQL == "SHOW DATABASES;" {
+		return "Databases:\nminidb\n(1 rows)\n"
+	}
+	if strings.HasPrefix(upperSQL, "DESCRIBE ") {
+		parts := strings.Fields(sql) // Use original SQL for arguments
+		if len(parts) < 2 {
+			return "Usage: DESCRIBE <table_name>\n"
+		}
+		tableName := parts[1]
+		// Remove trailing semicolon if present
+		tableName = strings.TrimSuffix(tableName, ";")
+
+		tableInfo, err := cat.GetTableByName(tableName)
+		if err != nil {
+			return fmt.Sprintf("Error: %v\n", err)
+		}
+
+		var schemaSb strings.Builder
+		schemaSb.WriteString(fmt.Sprintf("Table: %s\n", tableName))
+		schemaSb.WriteString("Column | Type\n")
+		schemaSb.WriteString("-------+-----\n")
+		for i, col := range tableInfo.Schema.ColNames {
+			schemaSb.WriteString(fmt.Sprintf("%-6s | %s\n", col, tableInfo.Schema.ColTypes[i]))
+		}
+		return schemaSb.String()
+	}
+
 	// Maintenance Commands
-	if strings.ToUpper(sql) == "FLUSH" {
+	if upperSQL == "FLUSH" {
 		if err := engine.Flush(context.Background()); err != nil {
 			return fmt.Sprintf("Flush Error: %v\n", err)
 		}
 		return "MemTable flushed to SSTable\n"
 	}
-	if strings.ToUpper(sql) == "COMPACT" {
+	if upperSQL == "COMPACT" {
 		if err := engine.Compact(context.Background()); err != nil {
 			return fmt.Sprintf("Compact Error: %v\n", err)
 		}

@@ -87,3 +87,15 @@ func (c *Catalog) CreateIndex(tableName string, colName string, idxName string) 
 	info.Indexes[colName] = idxName
 	return nil
 }
+
+// GetTableNames returns a list of all table names.
+func (c *Catalog) GetTableNames() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	names := make([]string, 0, len(c.tables))
+	for name := range c.tables {
+		names = append(names, name)
+	}
+	return names
+}
