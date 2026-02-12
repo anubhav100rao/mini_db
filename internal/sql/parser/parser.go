@@ -57,7 +57,7 @@ func (p *parser) parseIdentifier() string {
 func (p *parser) expect(keyword string) error {
 	p.skipWhitespace()
 	id := p.parseIdentifier()
-	if strings.ToUpper(id) != strings.ToUpper(keyword) {
+	if !strings.EqualFold(id, keyword) {
 		return fmt.Errorf("expected %s, got %s", keyword, id)
 	}
 	return nil
